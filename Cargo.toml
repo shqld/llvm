@@ -1,0 +1,10 @@
+[package]
+edition = "2021"
+name = "llvm"
+version = "0.0.0"
+
+[lib]
+crate-type = ["rlib"]
+
+[dependencies]
+llvm-sys = "150"

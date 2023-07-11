@@ -1,0 +1,94 @@
+name: Rust
+
+on:
+    push:
+        branches: ['main']
+    pull_request:
+        branches: ['main']
+
+env:
+    CARGO_TERM_COLOR: always
+
+jobs:
+    test:
+        runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                rust-version: [stable, beta, nightly]
+        steps:
+            - uses: actions/checkout@v3
+
+            - uses: dtolnay/rust-toolchain@master
+              with:
+                  toolchain: ${{ matrix.rust-version }}
+                  components: rustfmt, clippy
+            - uses: Swatinem/rust-cache@v2
+            - uses: taiki-e/install-action@cargo-llvm-cov
+
+            - run: cargo fmt --check
+            - run: cargo check --release
+            - run: cargo build --release
+            - run: cargo llvm-cov --release
+            - run: cargo test --release --doc
+            - run: cargo test --release --examples
+
+            - run: cargo doc --release --no-deps
+              if: github.event_name == 'push' && matrix.rust-version == 'stable'
+            - uses: actions/upload-artifact@v3
+              with:
+                  name: doc
+                  path: target/doc
+              if: github.event_name == 'push' && matrix.rust-version == 'stable'
+
+            - run: cargo llvm-cov report --release --html
+              if: github.event_name == 'push' && matrix.rust-version == 'stable'
+            - uses: actions/upload-artifact@v3
+              with:
+                  name: coverage
+                  path: target/llvm-cov/html
+              if: github.event_name == 'push' && matrix.rust-version == 'stable'
+
+    deploy-pages:
+        concurrency:
+            group: ci/deploy-pages
+            cancel-in-progress: true
+        environment:
+            name: github-pages
+            url: ${{ steps.deployment.outputs.page_url }}
+        needs:
+            - test
+        if: github.event_name == 'push'
+        permissions:
+            pages: write
+            id-token: write
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/download-artifact@v3
+              with:
+                  name: doc
+                  path: artifact/doc
+            - uses: actions/download-artifact@v3
+              with:
+                  name: coverage
+                  path: artifact/coverage
+            - run: |
+                  cat << EOF > artifact/index.html
+                  <!DOCTYPE html>
+                  <html>
+                    <head>
+                        <meta charset="utf-8">
+                        <title>shqld/llvm</title>
+                    </head>
+                    <body>
+                        <ul>
+                            <li><a href="doc/llvm/index.html">doc</a></li>
+                            <li><a href="coverage/index.html">coverage</a></li>
+                        </ul>
+                    </body>
+                  <html>
+                  EOF
+            - uses: actions/upload-pages-artifact@v1
+              with:
+                  path: artifact
+            - uses: actions/deploy-pages@v2
+              id: deployment
