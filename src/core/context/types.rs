@@ -198,10 +198,10 @@ impl Context {
 	/// ```
 	pub fn func_ty<'ctx>(
 		&'ctx self,
-		ret: impl Into<Type<'ctx>>,
+		ret: Type<'ctx>,
 		params: &[Type<'ctx>],
 		is_var_args: bool,
-	) -> Type {
+	) -> FunctionType {
 		let mut params = params
 			.iter()
 			.map(|t| unsafe { t.as_mut_ptr() })
@@ -209,13 +209,12 @@ impl Context {
 
 		FunctionType::new(unsafe {
 			LLVMFunctionType(
-				ret.into().as_mut_ptr(),
+				ret.as_mut_ptr(),
 				params.as_mut_ptr(),
 				params.len() as u32,
 				is_var_args as i32,
 			)
 		})
-		.into()
 	}
 
 	/// # Examples
