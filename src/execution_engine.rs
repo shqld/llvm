@@ -109,7 +109,7 @@ impl<'ctx> ExecutionEngine<'ctx> {
 	/// # Safety
 	///
 	/// It's caller's responsibility to ensure that the function is compiled
-	pub unsafe fn run(&self, args: &[&str], envs: &[&str]) -> Result<i32, String> {
+	pub unsafe fn run_main(&self, args: &[&str], envs: &[&str]) -> Result<i32, String> {
 		let function = self.get_function("main");
 		if let Some(function) = function {
 			self.run_function_as_main(&function, args, envs)

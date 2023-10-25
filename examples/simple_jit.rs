@@ -60,7 +60,7 @@ fn main() -> Result<(), String> {
 
 		assert!(function.is_valid());
 
-		assert_eq!(unsafe { engine.run(&[], &[]).unwrap() }, 42);
+		assert_eq!(unsafe { engine.run_main(&[], &[]).unwrap() }, 42);
 	}
 
 	Ok(())

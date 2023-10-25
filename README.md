@@ -45,7 +45,7 @@ define i32 @main() {
 );
 
 let engine = ExecutionEngine::new_mc_jit_compiler(module).unwrap();
-let result = unsafe { engine.run(&[], &[]).unwrap() };
+let result = unsafe { engine.run_main(&[], &[]).unwrap() };
 
 assert_eq!(result, 42);
 
