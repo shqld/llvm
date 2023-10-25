@@ -4,7 +4,7 @@ use llvm_sys::{core::*, LLVMType, LLVMTypeKind};
 
 use crate::{ffi::from_cstr, types::*, LLVMRef};
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Type<'ctx> {
 	Void(VoidType<'ctx>),
 	Int(IntType<'ctx>),
@@ -89,7 +89,7 @@ macro_rules! impl_expect_ty {
 			if let $variant(ty) = self {
 				ty
 			} else {
-				panic!($message);
+				panic!($message, self);
 			}
 		}
 	};
@@ -120,15 +120,15 @@ impl<'ctx> Type<'ctx> {
 	impl_as_ty!(pub fn as_vector_ty(&self) -> Option<&VectorType<'ctx>>, Self::Vector);
 	impl_as_ty!(pub fn as_label_ty(&self) -> Option<&LabelType<'ctx>>, Self::Label);
 
-	impl_expect_ty!(pub fn expect_void_ty(&self) -> VoidType<'ctx>, Self::Void, "expect void type");
-	impl_expect_ty!(pub fn expect_int_ty(&self) -> IntType<'ctx>, Self::Int, "expect int type");
-	impl_expect_ty!(pub fn expect_float_ty(&self) -> FloatType<'ctx>, Self::Float, "expect float type");
-	impl_expect_ty!(pub fn expect_ptr_ty(&self) -> PointerType<'ctx>, Self::Pointer, "expect ptr type");
-	impl_expect_ty!(pub fn expect_func_ty(&self) -> FunctionType<'ctx>, Self::Function, "expect func type");
-	impl_expect_ty!(pub fn expect_struct_ty(&self) -> StructType<'ctx>, Self::Struct, "expect struct type");
-	impl_expect_ty!(pub fn expect_array_ty(&self) -> ArrayType<'ctx>, Self::Array, "expect array type");
-	impl_expect_ty!(pub fn expect_vector_ty(&self) -> VectorType<'ctx>, Self::Vector, "expect vector type");
-	impl_expect_ty!(pub fn expect_label_ty(&self) -> LabelType<'ctx>, Self::Label, "expect label type");
+	impl_expect_ty!(pub fn expect_void_ty(&self) -> VoidType<'ctx>, Self::Void, "expect void type: {}");
+	impl_expect_ty!(pub fn expect_int_ty(&self) -> IntType<'ctx>, Self::Int, "expect int type: {}");
+	impl_expect_ty!(pub fn expect_float_ty(&self) -> FloatType<'ctx>, Self::Float, "expect float type: {}");
+	impl_expect_ty!(pub fn expect_ptr_ty(&self) -> PointerType<'ctx>, Self::Pointer, "expect ptr type: {}");
+	impl_expect_ty!(pub fn expect_func_ty(&self) -> FunctionType<'ctx>, Self::Function, "expect func type: {}");
+	impl_expect_ty!(pub fn expect_struct_ty(&self) -> StructType<'ctx>, Self::Struct, "expect struct type: {}");
+	impl_expect_ty!(pub fn expect_array_ty(&self) -> ArrayType<'ctx>, Self::Array, "expect array type: {}");
+	impl_expect_ty!(pub fn expect_vector_ty(&self) -> VectorType<'ctx>, Self::Vector, "expect vector type: {}");
+	impl_expect_ty!(pub fn expect_label_ty(&self) -> LabelType<'ctx>, Self::Label, "expect label type: {}");
 }
 
 pub mod types {
@@ -144,7 +144,7 @@ pub mod types {
 
 	macro_rules! impl_type_variant {
 		($Name:ident, $Variant:path) => {
-			#[derive(Debug, PartialEq, Eq)]
+			#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 			pub struct $Name<'ctx> {
 				raw: *mut LLVMType,
 				_marker: std::marker::PhantomData<Cell<&'ctx Context>>,
@@ -208,6 +208,20 @@ pub mod types {
 
 		pub fn addrspace(&self) -> u32 {
 			unsafe { LLVMGetPointerAddressSpace(self.raw) }
+		}
+	}
+
+	impl<'ctx> FunctionType<'ctx> {
+		pub fn ret(&self) -> Type<'ctx> {
+			Type::from(unsafe { LLVMGetReturnType(self.as_mut_ptr()) })
+		}
+
+		pub fn params(&self) -> &[Type<'ctx>] {
+			todo!("FunctionType::params(&self)")
+		}
+
+		pub fn is_var_args(&self) -> bool {
+			unsafe { LLVMIsFunctionVarArg(self.as_mut_ptr()) == 1 }
 		}
 	}
 
