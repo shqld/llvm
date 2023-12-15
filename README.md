@@ -3,6 +3,7 @@ shqld/llvm
 
 A rusty safe wrapper for [llvm-sys](https://gitlab.com/taricorp/llvm-sys.rs) with a focus on achieving higher safety and usability than [inkwell](https://github.com/TheDan64/inkwell).
 
+- Docs: https://shqld.github.io/llvm/doc/llvm/index.html
 
 Install
 -------
